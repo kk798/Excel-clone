@@ -1,0 +1,185 @@
+.excel-container {
+  padding: 8px;
+  height: calc(100vh - 16px); /* Account for padding */
+  width: calc(100vw - 16px);
+  background: #fff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.excel-grid {
+  display: grid;
+  grid-template-areas:
+    "corner column-headers"
+    "row-headers main-grid";
+  grid-template-columns: 40px 1fr;
+  grid-template-rows: 40px 1fr;
+  border: 1px solid #e2e3e3;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+.corner-header {
+  grid-area: corner;
+  background: #f8f9fa;
+  border-right: 1px solid #e2e3e3;
+  border-bottom: 1px solid #e2e3e3;
+  z-index: 3;
+  position: sticky;
+  top: 0;
+  left: 0;
+}
+
+.column-headers {
+  grid-area: column-headers;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e2e3e3;
+  z-index: 2;
+  position: relative;
+  overflow: hidden;
+}
+
+.row-headers {
+  grid-area: row-headers;
+  background: #f8f9fa;
+  border-right: 1px solid #e2e3e3;
+  z-index: 2;
+  position: relative;
+  overflow: hidden;
+}
+
+.main-grid {
+  grid-area: main-grid;
+  background: #fff;
+  position: relative;
+  z-index: 1;
+  overflow: auto;
+  -ms-overflow-style: none;  /* Hide scrollbar for IE and Edge */
+  scrollbar-width: none;  /* Hide scrollbar for Firefox */
+}
+
+.main-grid::-webkit-scrollbar {
+  display: none;  /* Hide scrollbar for Chrome, Safari and Opera */
+}
+
+.grid {
+  border: none;
+}
+
+.header-grid {
+  overflow: hidden !important;
+}
+
+.main-grid-inner {
+  overflow: auto !important;
+}
+
+.header-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #333;
+  background: #f8f9fa;
+  border-right: 1px solid #e2e3e3;
+  border-bottom: 1px solid #e2e3e3;
+  user-select: none;
+}
+
+.column-header {
+  justify-content: center;
+  position: sticky;
+  top: 0;
+}
+
+.row-header {
+  justify-content: center;
+  position: sticky;
+  left: 0;
+}
+
+.cell {
+  position: relative;
+  border-right: 1px solid #e2e3e3;
+  border-bottom: 1px solid #e2e3e3;
+  font-size: 13px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.cell.focused:not(.editing) {
+  position: relative;
+}
+
+.cell.focused:not(.editing)::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid #1a73e8;
+  pointer-events: none;
+}
+
+.cell.editing {
+  background: #fff;
+  position: relative;
+}
+
+.cell.editing::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid #1a73e8;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.cell-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  background: transparent;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  display: none;
+}
+
+::-webkit-scrollbar-track {
+  display: none;
+}
+
+::-webkit-scrollbar-thumb {
+  display: none;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  display: none;
+}
+
+::-webkit-scrollbar-corner {
+  display: none;
+}
+
+.main-grid.scrolling-horizontal::-webkit-scrollbar-vertical,
+.main-grid.scrolling-vertical::-webkit-scrollbar-horizontal {
+  display: none;
+}
