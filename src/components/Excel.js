@@ -82,15 +82,44 @@ const Excel = () => {
   const evaluateFormula = useCallback(
     (formula) => {
       try {
-        const evaluatedFormula = formula.replace(/[A-Z]+\d+/g, (match) => {
+        // First replace all cell references with their values
+        const evaluatedFormula = formula.replace(/[A-Z]+[0-9]+/g, (match) => {
           const col = match.match(/[A-Z]+/)[0];
-          const row = parseInt(match.match(/\d+/)[0]) - 1;
+          const row = parseInt(match.match(/[0-9]+/)[0]) - 1;
           const colIndex = col
             .split("")
             .reduce((acc, char) => acc * 26 + char.charCodeAt(0) - 65, 0);
-          return getCellValue(row, colIndex) || 0;
+          
+          const cellValue = getCellValue(row, colIndex);
+          // If the cell value is empty, return 0
+          if (!cellValue) return "0";
+          // If the cell value is a number, return it
+          if (!isNaN(cellValue)) return cellValue;
+          // If the cell value is a formula, evaluate it (but prevent infinite recursion)
+          if (cellValue.startsWith("=")) {
+            const result = evaluateFormula(cellValue.slice(1));
+            return isNaN(result) ? "0" : result;
+          }
+          return "0";
         });
-        return eval(evaluatedFormula);
+
+        // Evaluate the resulting expression
+        // First check if the formula is valid
+        if (!/^[0-9+\-*/(). ]+$/.test(evaluatedFormula)) {
+          return "#ERROR";
+        }
+
+        const result = Function(`"use strict"; return (${evaluatedFormula})`)();
+        
+        // Format the result
+        if (typeof result === 'number') {
+          // Handle division by zero
+          if (!isFinite(result)) return "#DIV/0!";
+          // Round to 6 decimal places to avoid floating point issues
+          return Math.round(result * 1000000) / 1000000;
+        }
+        
+        return "#ERROR";
       } catch (error) {
         return "#ERROR";
       }
