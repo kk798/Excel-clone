@@ -18,6 +18,7 @@ const getColumnLabel = (index) => {
 const Excel = () => {
   const [cells, setCells] = useState({});
   const [editingCell, setEditingCell] = useState(null);
+  const [focusedCell, setFocusedCell] = useState({ row: 0, col: 0 });
   const [dimensions, setDimensions] = useState({
     width: window.innerWidth - 20,
     height: window.innerHeight - 20,
@@ -97,9 +98,66 @@ const Excel = () => {
     [getCellValue]
   );
 
+  const moveFocus = useCallback((rowDelta, colDelta) => {
+    setFocusedCell(prev => {
+      const newRow = Math.max(0, Math.min(GRID_SIZE - 1, prev.row + rowDelta));
+      const newCol = Math.max(0, Math.min(GRID_SIZE - 1, prev.col + colDelta));
+      
+      // Scroll the cell into view if needed
+      if (mainGridRef.current) {
+        mainGridRef.current.scrollToItem({
+          columnIndex: newCol,
+          rowIndex: newRow,
+          align: "center"
+        });
+      }
+      
+      return { row: newRow, col: newCol };
+    });
+  }, []);
+
+  const handleKeyDown = useCallback((e) => {
+    if (editingCell) return; // Don't handle navigation while editing
+
+    switch (e.key) {
+      case 'Tab':
+        e.preventDefault();
+        moveFocus(0, e.shiftKey ? -1 : 1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        moveFocus(1, 0);
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        moveFocus(0, 1);
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        moveFocus(0, -1);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        moveFocus(-1, 0);
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        moveFocus(1, 0);
+        break;
+      default:
+        break;
+    }
+  }, [moveFocus, editingCell]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
   const Cell = ({ columnIndex, rowIndex, style }) => {
     const cellKey = `${rowIndex},${columnIndex}`;
     const isEditing = editingCell === cellKey;
+    const isFocused = focusedCell.row === rowIndex && focusedCell.col === columnIndex;
     const value = getCellValue(rowIndex, columnIndex);
     const displayValue = value.startsWith("=")
       ? evaluateFormula(value.slice(1))
@@ -107,7 +165,7 @@ const Excel = () => {
 
     return (
       <div
-        className={`cell ${isEditing ? "editing" : ""}`}
+        className={`cell ${isEditing ? "editing" : ""} ${isFocused ? "focused" : ""}`}
         style={{
           ...style,
           padding: "4px 6px",
@@ -116,7 +174,10 @@ const Excel = () => {
           display: "flex",
           alignItems: "center",
         }}
-        onClick={() => setEditingCell(cellKey)}
+        onClick={() => {
+          setFocusedCell({ row: rowIndex, col: columnIndex });
+          setEditingCell(cellKey);
+        }}
         onBlur={() => setEditingCell(null)}
       >
         {isEditing ? (
@@ -126,6 +187,25 @@ const Excel = () => {
             onChange={(e) => updateCell(rowIndex, columnIndex, e.target.value)}
             autoFocus
             className="cell-input"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === 'Tab') {
+                e.stopPropagation(); // Stop event from bubbling up
+                e.preventDefault();
+                const nextRow = e.key === 'Enter' ? rowIndex + 1 : rowIndex;
+                const nextCol = e.key === 'Tab' ? columnIndex + (e.shiftKey ? -1 : 1) : columnIndex;
+                setEditingCell(null);
+                setFocusedCell({ row: nextRow, col: nextCol });
+                
+                // Scroll into view if needed
+                if (mainGridRef.current) {
+                  mainGridRef.current.scrollToItem({
+                    columnIndex: nextCol,
+                    rowIndex: nextRow,
+                    align: "center"
+                  });
+                }
+              }
+            }}
           />
         ) : (
           displayValue
